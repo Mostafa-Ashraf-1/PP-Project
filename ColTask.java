@@ -17,7 +17,7 @@ public ColTask(int [][] board, ReentrantLock lock, CountDownLatch latch, AtomicI
     this.latch = latch;
     this.errors = errors;
 }
-
+    @Override
     public void compute()
     {
         for (int col = 0; col < 9; col++)
