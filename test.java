@@ -14,19 +14,20 @@ public class test {
             {7,1,3,9,2,4,8,5,6},
             {9,6,1,5,3,7,2,8,4},
             {2,8,7,4,1,9,6,3,5},
-            {3,4,5,2,8,6,1,7,9}
+            {3,4,5,2,8,6,1,9,9}// 7 -> 9
         };
 
-        int check = Check.checkCol(board, 0);
+        //int check = Check.checkCol(board, 0);
+        int CheckRow = Check.checkRow(board, 8);
 
-        if (check == 0)
+        if (CheckRow == 0)
         {
-            System.out.println("Valid column");
+            System.out.println("Valid Row");
         }
-        else if (check == -1)
+        else if (CheckRow == -1)
         {
             System.out.println("Invalid numbers");
         }
-        else{System.out.println("Invalid column");}
+        else{System.out.println("Invalid Row");}
     }
 }
