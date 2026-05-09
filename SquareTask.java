@@ -1,16 +1,15 @@
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class SquareTask extends RecursiveAction {
 
     private int[][] board;
     private ReentrantLock lock;
     private CountDownLatch latch;
-    private AtomicInteger errors;
+    private Error errors;
 
-    public SquareTask(int[][] board, ReentrantLock lock, CountDownLatch latch, AtomicInteger errors) {
+    public SquareTask(int[][] board, ReentrantLock lock, CountDownLatch latch, Error errors) {
         this.board = board;
         this.lock = lock;
         this.latch = latch;
@@ -26,7 +25,7 @@ public class SquareTask extends RecursiveAction {
                 if (!Check.checkSquare(board, startRow, startCol)) {
                     lock.lock();
                     try {
-                        errors.incrementAndGet();
+                        errors.inc();
                     } finally {
                         lock.unlock();
                     }

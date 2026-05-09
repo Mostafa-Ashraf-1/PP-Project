@@ -1,16 +1,15 @@
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ColTask extends RecursiveAction{
 
 private int[][] board;
 private ReentrantLock lock;
 private CountDownLatch latch;
-private AtomicInteger errors;
+private Error errors;
 
-public ColTask(int [][] board, ReentrantLock lock, CountDownLatch latch, AtomicInteger errors)
+public ColTask(int [][] board, ReentrantLock lock, CountDownLatch latch, Error errors)
 {
     this.board = board;
     this.lock = lock;
@@ -27,7 +26,7 @@ public ColTask(int [][] board, ReentrantLock lock, CountDownLatch latch, AtomicI
                 lock.lock();
                 
                 try{
-                    errors.incrementAndGet();
+                    errors.inc();
                 }
 
                 finally{
