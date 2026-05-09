@@ -1,17 +1,16 @@
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class RowTask extends RecursiveAction {
 
     private int[][] board;
     private ReentrantLock lock;
     private CountDownLatch latch;
-    private AtomicInteger errors;
+    private Error errors;
 
 
-    public RowTask(int[][] board, ReentrantLock lock, CountDownLatch latch, AtomicInteger errors) {
+    public RowTask(int[][] board, ReentrantLock lock, CountDownLatch latch, Error errors) {
         this.board = board;
         this.lock = lock;
         this.latch = latch;
@@ -29,7 +28,7 @@ public class RowTask extends RecursiveAction {
 
                 lock.lock();
                 try {
-                    errors.incrementAndGet();
+                    errors.inc();
                 } finally {
                     lock.unlock();
                 }

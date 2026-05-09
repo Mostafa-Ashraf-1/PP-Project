@@ -1,17 +1,15 @@
 import java.util.concurrent.RecursiveAction;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainTask extends RecursiveAction{
 
     private int[][] board;
     private ReentrantLock lock;
     private CountDownLatch latch;
-    private AtomicInteger errors;
+    private Error errors;
 
-    public MainTask(int [][] board, ReentrantLock lock, CountDownLatch latch, AtomicInteger errors)
+    public MainTask(int [][] board, ReentrantLock lock, CountDownLatch latch, Error errors)
         {
             this.board = board;
             this.lock = lock;
@@ -22,7 +20,6 @@ public class MainTask extends RecursiveAction{
     public void compute()
     {
         //Make an instance for each task and set the parameters.
-        
         
         //RowTask
         RowTask rowTask = new RowTask(board, lock, latch, errors);

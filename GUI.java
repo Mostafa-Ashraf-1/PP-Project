@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.net.URL;
 import java.net.URLConnection;
@@ -192,7 +191,8 @@ public class GUI extends JFrame {
         final int NUM_THREADS = 3;
         ForkJoinPool pool = new ForkJoinPool(NUM_THREADS);
         ReentrantLock lock = new ReentrantLock();
-        AtomicInteger errors = new AtomicInteger(0);
+        // AtomicInteger errors = new AtomicInteger(0);
+        Error errors = new Error(0);
         CountDownLatch latch = new CountDownLatch(NUM_TASKS);
 
         new Thread(() -> {
