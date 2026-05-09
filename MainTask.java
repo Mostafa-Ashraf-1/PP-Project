@@ -31,19 +31,19 @@ public class MainTask extends RecursiveAction{
         //SquareTask
         SquareTask squareTask = new SquareTask(board, lock, latch, errors);
 
-        /*
-        Use fork to run 2 of the tasks
         
-        use compute to run the remaining task
-
-        (Therefore that the third task would be running on the current cpu so...)
-        */
+    //Use fork to run 2 of the tasks
        rowTask.fork();
        colTask.fork();
        
+        /*
+        Run the third task directly using compute()
+        so the current worker thread also does useful work
+        instead of only waiting.
+         */
        squareTask.compute();
-        //do join for the first 2 tasks to wait them to be finished..
 
+        //do join for the first 2 tasks to wait them to be finished..
         rowTask.join();
         colTask.join();
         
