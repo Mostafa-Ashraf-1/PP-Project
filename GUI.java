@@ -3,6 +3,11 @@ import java.awt.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.net.URL;
+import java.net.URLConnection;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 public class GUI extends JFrame {
     private JTextField[][] cells = new JTextField[9][9];
@@ -21,39 +26,89 @@ public class GUI extends JFrame {
     };
     private int currentExample = 0;
 
+    
+    class SudokuCell extends JTextField {
+        public SudokuCell() {
+            setOpaque(false); // Let parent background show through
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            // Manually paint the background color if it's set
+            if (getBackground() != null) {
+                g.setColor(getBackground());
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+            super.paintComponent(g);
+        }
+    }
+
+    class BackgroundPanel extends JPanel {
+        private BufferedImage img;
+        private int alpha;
+
+        public BackgroundPanel(String urlStr, int overlayAlpha) {
+            this.alpha = overlayAlpha;
+            try {
+                URL url = new URL(urlStr);
+                URLConnection connection = url.openConnection();
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+                img = ImageIO.read(connection.getInputStream());
+            } catch (IOException e) {
+                System.err.println("Could not load image: " + urlStr);
+                setBackground(new Color(255, 230, 240));
+            }
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (img != null) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g2d.drawImage(img, 0, 0, getWidth(), getHeight(), this);
+                g2d.setColor(new Color(255, 255, 255, alpha));
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        }
+    }
+
     public GUI() {
         setTitle("Parallel Sudoku Validator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(650, 750);
-        setLayout(new BorderLayout(10, 10));
-        getContentPane().setBackground(Color.WHITE);
+
+        BackgroundPanel mainPanel = new BackgroundPanel("https://www.hotrags.com/cdn/shop/files/531704.jpg", 80);
+        mainPanel.setLayout(new BorderLayout(10, 10));
+        setContentPane(mainPanel);
 
         statusLabel = new JLabel("Press a button to start", SwingConstants.CENTER);
         statusLabel.setFont(new Font("SansSerif", Font.ITALIC, 22));
         statusLabel.setPreferredSize(new Dimension(600, 60));
         add(statusLabel, BorderLayout.NORTH);
 
-        JPanel gridPanel = new JPanel(new GridLayout(9, 9));
-        gridPanel.setBackground(Color.BLACK);
-        gridPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        BackgroundPanel gridBgPanel = new BackgroundPanel("https://www.shutterstock.com/image-illustration/kawaii-girl-bunny-frame-cute-600w-2689869251.jpg", 120);
+        gridBgPanel.setLayout(new GridLayout(9, 9));
+        gridBgPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         for (int r = 0; r < 9; r++) {
             for (int c = 0; c < 9; c++) {
-                cells[r][c] = new JTextField();
+                // Using our custom class here
+                cells[r][c] = new SudokuCell();
                 cells[r][c].setHorizontalAlignment(JTextField.CENTER);
                 cells[r][c].setFont(new Font("SansSerif", Font.BOLD, 22));
-                cells[r][c].setBackground(Color.WHITE);
+                cells[r][c].setBackground(new Color(0, 0, 0, 0)); // Start fully transparent
 
                 int top = (r % 3 == 0) ? 3 : 1;
                 int left = (c % 3 == 0) ? 3 : 1;
                 cells[r][c].setBorder(BorderFactory.createMatteBorder(top, left, 1, 1, Color.BLACK));
-                gridPanel.add(cells[r][c]);
+                gridBgPanel.add(cells[r][c]);
             }
         }
-        add(gridPanel, BorderLayout.CENTER);
+        add(gridBgPanel, BorderLayout.CENTER);
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 20));
-        btnPanel.setBackground(Color.WHITE);
+        btnPanel.setOpaque(false);
 
         JButton btnLoad = new JButton("Load Example");
         JButton btnChallenge = new JButton("User Challenge");
@@ -69,6 +124,7 @@ public class GUI extends JFrame {
         add(btnPanel, BorderLayout.SOUTH);
 
         btnLoad.addActionListener(e -> {
+            clearCellColors();
             statusLabel.setText("Loaded Example #" + (currentExample % examples.length + 1));
             statusLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
             loadBoard(examples[currentExample % examples.length]);
@@ -76,24 +132,35 @@ public class GUI extends JFrame {
         });
 
         btnChallenge.addActionListener(e -> {
+            clearCellColors();
             statusLabel.setText("Challenge Mode: Fill the blanks!");
             statusLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
             loadBoard(examples[0]);
             cells[0][0].setText("");
             cells[4][4].setText("");
             cells[8][8].setText("");
-            cells[0][0].setBackground(new Color(255, 255, 200));
-            cells[4][4].setBackground(new Color(255, 255, 200));
-            cells[8][8].setBackground(new Color(255, 255, 200));
+            // Highlight specific input cells
+            cells[0][0].setBackground(new Color(255, 255, 200, 180));
+            cells[4][4].setBackground(new Color(255, 255, 200, 180));
+            cells[8][8].setBackground(new Color(255, 255, 200, 180));
         });
 
         btnValidate.addActionListener(e -> runParallelValidation());
     }
 
+    private void clearCellColors() {
+        for (int r = 0; r < 9; r++) {
+            for (int c = 0; c < 9; c++) {
+                cells[r][c].setBackground(new Color(0, 0, 0, 0)); // Reset to transparent
+                cells[r][c].repaint();
+            }
+        }
+    }
+
     private void styleButton(JButton btn) {
         btn.setPreferredSize(new Dimension(160, 45));
         btn.setFocusPainted(false);
-        btn.setBackground(new Color(240, 240, 240));
+        btn.setBackground(new Color(240, 240, 240, 220));
         btn.setFont(new Font("SansSerif", Font.BOLD, 14));
     }
 
@@ -101,18 +168,13 @@ public class GUI extends JFrame {
         for (int r = 0; r < 9; r++) {
             for (int c = 0; c < 9; c++) {
                 cells[r][c].setText(String.valueOf(board[r][c]));
-                cells[r][c].setBackground(Color.WHITE);
             }
         }
     }
 
     private void runParallelValidation() {
+        clearCellColors();
         int[][] boardData = new int[9][9];
-        for(int r=0; r<9; r++) {
-            for(int c=0; c<9; c++) {
-                cells[r][c].setBackground(Color.WHITE);
-            }
-        }
 
         try {
             for (int r = 0; r < 9; r++) {
@@ -150,49 +212,50 @@ public class GUI extends JFrame {
     }
 
     private void highlightErrors(int[][] board) {
-        Color babyBlue = new Color(173, 216, 230);
-        Color lightRed = new Color(255, 150, 150);
+        Color babyBlue = new Color(173, 216, 230, 180);
+        Color lightRed = new Color(255, 150, 150, 180);
 
-        //Coloring the whole Row, Col & Square Baby Blue
+        // Highlight Rows and Columns
         for (int i = 0; i < 9; i++) {
             if (Check.checkRow(board, i) != 0) {
-                for (int c = 0; c < 9; c++) cells[i][c].setBackground(babyBlue);
+                for (int c = 0; c < 9; c++) {
+                    cells[i][c].setBackground(babyBlue);
+                }
             }
             if (Check.checkCol(board, i) != 0) {
-                for (int r = 0; r < 9; r++) cells[r][i].setBackground(babyBlue);
+                for (int r = 0; r < 9; r++) {
+                    cells[r][i].setBackground(babyBlue);
+                }
             }
         }
+
+        // Highlight 3x3 Squares
         for (int r = 0; r < 9; r += 3) {
             for (int c = 0; c < 9; c += 3) {
                 if (!Check.checkSquare(board, r, c)) {
                     for (int sr = 0; sr < 3; sr++) {
-                        for (int sc = 0; sc < 3; sc++) cells[r+sr][c+sc].setBackground(babyBlue);
+                        for (int sc = 0; sc < 3; sc++) {
+                            cells[r+sr][c+sc].setBackground(babyBlue);
+                        }
                     }
                 }
             }
         }
 
-        //Coloring the specific cells that cause the error in Red
+        // Highlight Individual Conflict Cells (Red)
         for (int r = 0; r < 9; r++) {
             for (int c = 0; c < 9; c++) {
                 int val = board[r][c];
-
-                // Check if empty or out of range
                 if (val < 1 || val > 9) {
                     cells[r][c].setBackground(lightRed);
                     continue;
                 }
 
                 boolean conflict = false;
-                // Row Duplicate Check
                 for (int i = 0; i < 9; i++) {
                     if (i != c && board[r][i] == val) conflict = true;
-                }
-                // Column Duplicate Check
-                for (int i = 0; i < 9; i++) {
                     if (i != r && board[i][c] == val) conflict = true;
                 }
-                // Square Duplicate Check
                 int sR = (r / 3) * 3, sC = (c / 3) * 3;
                 for (int i = sR; i < sR + 3; i++) {
                     for (int j = sC; j < sC + 3; j++) {
