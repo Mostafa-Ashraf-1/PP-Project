@@ -8,13 +8,13 @@ import java.net.URLConnection;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.File; // Added
-import javax.sound.sampled.*; // Added for music
+import java.io.File;
+import javax.sound.sampled.*;
 
 public class GUI extends JFrame {
     private JTextField[][] cells = new JTextField[9][9];
     private JLabel statusLabel;
-    private Clip backgroundClip; // Added to reference the music
+    private Clip backgroundClip;
     private int[][][] examples = {
             {{5,3,4,6,7,8,9,1,2},{6,7,2,1,9,5,3,4,8},{1,9,8,3,4,2,5,6,7},{8,5,9,7,6,1,4,2,3},{4,2,6,8,5,3,7,9,1},{7,1,3,9,2,4,8,5,6},{9,6,1,5,3,7,2,8,4},{2,8,7,4,1,9,6,3,5},{3,4,5,2,8,6,1,7,9}},
             {{1,1,1,1,1,1,1,1,1},{2,2,2,2,2,2,2,2,2},{3,3,3,3,3,3,3,3,3},{4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5},{6,6,6,6,6,6,6,6,6},{7,7,7,7,7,7,7,7,7},{8,8,8,8,8,8,8,8,8},{9,9,9,9,9,9,9,9,9}},
@@ -148,7 +148,6 @@ public class GUI extends JFrame {
         btnValidate.addActionListener(e -> runParallelValidation());
     }
 
-    // NEW METHOD FOR SONG
     public void playBackgroundMusic(String songPath) {
         try {
             File musicFile = new File(songPath);
@@ -156,7 +155,7 @@ public class GUI extends JFrame {
                 AudioInputStream audioStream = AudioSystem.getAudioInputStream(musicFile);
                 backgroundClip = AudioSystem.getClip();
                 backgroundClip.open(audioStream);
-                backgroundClip.loop(Clip.LOOP_CONTINUOUSLY); // Infinite loop
+                backgroundClip.loop(Clip.LOOP_CONTINUOUSLY);
                 backgroundClip.start();
             } else {
                 System.out.println("Song file not found at: " + musicFile.getAbsolutePath());
@@ -210,7 +209,7 @@ public class GUI extends JFrame {
         final int NUM_THREADS = 3;
         ForkJoinPool pool = new ForkJoinPool(NUM_THREADS);
         ReentrantLock lock = new ReentrantLock();
-        Error errors = new Error(0); // FIXED: Changed AtomicInteger to Error
+        Error errors = new Error(0);
         CountDownLatch latch = new CountDownLatch(NUM_TASKS);
 
         new Thread(() -> {
