@@ -1,16 +1,20 @@
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.net.URL;
 import java.net.URLConnection;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.File;
+import javax.sound.sampled.*;
 
 public class GUI extends JFrame {
     private JTextField[][] cells = new JTextField[9][9];
     private JLabel statusLabel;
+    private Clip backgroundClip;
     private int[][][] examples = {
             {{5,3,4,6,7,8,9,1,2},{6,7,2,1,9,5,3,4,8},{1,9,8,3,4,2,5,6,7},{8,5,9,7,6,1,4,2,3},{4,2,6,8,5,3,7,9,1},{7,1,3,9,2,4,8,5,6},{9,6,1,5,3,7,2,8,4},{2,8,7,4,1,9,6,3,5},{3,4,5,2,8,6,1,7,9}},
             {{1,1,1,1,1,1,1,1,1},{2,2,2,2,2,2,2,2,2},{3,3,3,3,3,3,3,3,3},{4,4,4,4,4,4,4,4,4},{5,5,5,5,5,5,5,5,5},{6,6,6,6,6,6,6,6,6},{7,7,7,7,7,7,7,7,7},{8,8,8,8,8,8,8,8,8},{9,9,9,9,9,9,9,9,9}},
@@ -25,15 +29,14 @@ public class GUI extends JFrame {
     };
     private int currentExample = 0;
 
-    
+
     class SudokuCell extends JTextField {
         public SudokuCell() {
-            setOpaque(false); // Let parent background show through
+            setOpaque(false);
         }
 
         @Override
         protected void paintComponent(Graphics g) {
-            // Manually paint the background color if it's set
             if (getBackground() != null) {
                 g.setColor(getBackground());
                 g.fillRect(0, 0, getWidth(), getHeight());
@@ -81,7 +84,7 @@ public class GUI extends JFrame {
         mainPanel.setLayout(new BorderLayout(10, 10));
         setContentPane(mainPanel);
 
-        statusLabel = new JLabel("Press a button to start", SwingConstants.CENTER);
+        statusLabel = new JLabel("Just a Sudoku\uD83D\uDE0D \uD83C\uDFB6✨", SwingConstants.CENTER);
         statusLabel.setFont(new Font("SansSerif", Font.ITALIC, 22));
         statusLabel.setPreferredSize(new Dimension(600, 60));
         add(statusLabel, BorderLayout.NORTH);
@@ -92,11 +95,10 @@ public class GUI extends JFrame {
 
         for (int r = 0; r < 9; r++) {
             for (int c = 0; c < 9; c++) {
-                // Using our custom class here
                 cells[r][c] = new SudokuCell();
                 cells[r][c].setHorizontalAlignment(JTextField.CENTER);
                 cells[r][c].setFont(new Font("SansSerif", Font.BOLD, 22));
-                cells[r][c].setBackground(new Color(0, 0, 0, 0)); // Start fully transparent
+                cells[r][c].setBackground(new Color(0, 0, 0, 0));
 
                 int top = (r % 3 == 0) ? 3 : 1;
                 int left = (c % 3 == 0) ? 3 : 1;
@@ -138,7 +140,6 @@ public class GUI extends JFrame {
             cells[0][0].setText("");
             cells[4][4].setText("");
             cells[8][8].setText("");
-            // Highlight specific input cells
             cells[0][0].setBackground(new Color(255, 255, 200, 180));
             cells[4][4].setBackground(new Color(255, 255, 200, 180));
             cells[8][8].setBackground(new Color(255, 255, 200, 180));
@@ -147,10 +148,27 @@ public class GUI extends JFrame {
         btnValidate.addActionListener(e -> runParallelValidation());
     }
 
+    public void playBackgroundMusic(String songPath) {
+        try {
+            File musicFile = new File(songPath);
+            if (musicFile.exists()) {
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(musicFile);
+                backgroundClip = AudioSystem.getClip();
+                backgroundClip.open(audioStream);
+                backgroundClip.loop(Clip.LOOP_CONTINUOUSLY);
+                backgroundClip.start();
+            } else {
+                System.out.println("Song file not found at: " + musicFile.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void clearCellColors() {
         for (int r = 0; r < 9; r++) {
             for (int c = 0; c < 9; c++) {
-                cells[r][c].setBackground(new Color(0, 0, 0, 0)); // Reset to transparent
+                cells[r][c].setBackground(new Color(0, 0, 0, 0));
                 cells[r][c].repaint();
             }
         }
@@ -191,7 +209,6 @@ public class GUI extends JFrame {
         final int NUM_THREADS = 3;
         ForkJoinPool pool = new ForkJoinPool(NUM_THREADS);
         ReentrantLock lock = new ReentrantLock();
-        // AtomicInteger errors = new AtomicInteger(0);
         Error errors = new Error(0);
         CountDownLatch latch = new CountDownLatch(NUM_TASKS);
 
@@ -215,7 +232,6 @@ public class GUI extends JFrame {
         Color babyBlue = new Color(173, 216, 230, 180);
         Color lightRed = new Color(255, 150, 150, 180);
 
-        // Highlight Rows and Columns
         for (int i = 0; i < 9; i++) {
             if (Check.checkRow(board, i) != 0) {
                 for (int c = 0; c < 9; c++) {
@@ -229,7 +245,6 @@ public class GUI extends JFrame {
             }
         }
 
-        // Highlight 3x3 Squares
         for (int r = 0; r < 9; r += 3) {
             for (int c = 0; c < 9; c += 3) {
                 if (!Check.checkSquare(board, r, c)) {
@@ -242,7 +257,6 @@ public class GUI extends JFrame {
             }
         }
 
-        // Highlight Individual Conflict Cells (Red)
         for (int r = 0; r < 9; r++) {
             for (int c = 0; c < 9; c++) {
                 int val = board[r][c];
